@@ -1,6 +1,6 @@
 /*************************************************************************
 * Program:                                                                 
-*    Project 8, Mad Lib                                                    
+*    Project 10, Mad Lib                                                   
 *    Brother Ridges, CS124                                                 
 * Author:                                                                  
 *    Alexander Berryhill                                                   
@@ -10,160 +10,119 @@
 *                                                                          
 *                                                                          
 *                                                                          
-*    Estimated:  0.5 hrs                                                   
-*    Actual:     0.5 hrs                                                   
-*      The most difficult part was                                         
+*    Estimated:  3.5 hrs                                                   
+*    Actual:     13.5 hrs                                                  
+*      The most difficult part was getting askQuestion to work.            
 *************************************************************************/
 
+#include <cassert>
 #include <fstream>
 #include <locale>
 #include <iostream>
 using namespace std;
 
 /*************************************************************************
- *                                                                         
+ * getFile will prompt and get a fileName from the user.                   
  ************************************************************************/
 void getFile(char fileName[])
 {
-   cout << "Please enter the filename of the Mad Lib: ";
-   cin >> fileName;
+   cout << "Please enter the filename of the Mad Lib: ";//prompt           
+   cin >> fileName;                   //GET                                
+   cin.ignore(256, '\n');             // avoid later problems      
    return;
 }
 
 /*************************************************************************
- *                               
+ * empty will empty an array by filling it with null                       
  ************************************************************************/
-void readFile(char fileName[], char space[][256], char file[][256])
+void empty(char array[])
 {
-   int spaceSpot = 0;
-   int fileY = 0;
-   int fileX = 0;
-   char tempFile [];
-   ifstream fin;
-   fin.open(fileName);
-   if (fin.fail())
+   for (int i = 0; i < 256; i++)//fill the array with null                 
    {
-      cout << "Failed to open file: " << fileName << endl;
-      return;
+      array[i] = '\0';        //for emptying the space[] and tempSpace[]   
    }
-   fin.getline(tempFile, 256);
+   return;                    //used in interpret before askQuestion       
+}
 
-   for (int i = 0; tempFile[i] != '\0'; i++)
+/*************************************************************************
+ * removeNonsense will remove the stuff I have spent hours trying to find  
+ * the source of but can not.                                              
+ ************************************************************************/
+void removeNonsense(char file[])
+{
+   int rNOffset = 0;
+   for (int i = 0; file[i]; i++)
    {
-      if (tempFile[i] == ':')
+      if (!(file[i] >= 1 && file[i] <= 'z'))//not null, but still not good
       {
-         if(tempFile[i+1] >= 'a' || tempFile[i + 1] <= 'z')
-         {
-            char temp[256];
-            int place = 0;
-            while (tempFile[i] != ' ')
-            {
-               temp[place];
-               place++;
-               i++;
-            }
-            spaceSpot++;
-            fileY++;
-            fileX = 0;
-         }
-         else if (tempFile[i + 1] == '!')
-         {
-            file[fileY][fileX - 1] = '';
-            file[fileY][fileX] = '\n';
-            fileX++;
-            i += 2;
-         }
-         else if (tempFile[i + 1] == '<')
-         {
-            file[fileY][fileX] = '\"';
-            fileX++;
-            i += 2;
-         }
-         else if (tempFile[i + 1] == '>')
-         {
-            file[fileY][fileX - 1] = '';
-            file[fileY][fileX] = '\"';
-            fileX++;
-            i++;
-         }
-         else if (tempFile[i + 1] == '.')
-         {
-            file[fileY][fileX - 1] = '';
-            file[fileY][fileX] = '.';
-            fileX++;
-            i++;
-         }
-         else if (tempFile[i + 1] == ',')
-         {
-            file[fileY][fileX - 1] = '';
-            file[fileY][fileX] = ',';
-            fileX++;
-            i++;
-            
-         }
+         if (file[i - 1] != '\n')
+            file[i - 1 - rNOffset] = '\0';
+         file[i - rNOffset] = '\0';
+      }
+      else if (file[i] == ' ' && file[i - 1] == ' ')//double spaces        
+      {
+        file[i - ++rNOffset] = file[i];
+      }
+      else if (file[i] == ' ' && !(file[i + 1] >= 1 &&
+                                   file[i + 1] <= 'z'))
+      {
+         file[i - rNOffset] = '\0';//spaces before the end of file.        
       }
       else
-      {
-         file[fileY][fileX] = tempFile[i];
-      }
-   }
-   fin.close();
-   return;
-}
-/*************************************************************************
- *                                                                         
- ************************************************************************/
-void askQuestion(char space[][256], char filledSpace[][256])
-{
-   char fixedSpace[24][256];
-   for (int i = 0; space[i] != '\0'; i++)
-   {
-      fixedSpace[i][0] = toupper(space[i][0]);
-      for (int j = 1; space[i][j] != '\0'; j++)
-      {
-         if (space[i][j] == '_')
-         {
-            fixedSpace[i][j] = ' ';
-            fixedSpace[i][j + 1] = toupper(space[i][j + 1]);
-            j++;
-         }
-         else
-         {
-            fixedSpace[i][j] = space[i][j];
-         }
-  return;
-}
-
-/*************************************************************************
- *                                                                         
- ************************************************************************/
-void display(char file[][256], char filledSpace[][256])
-{
-   for (int i = 0; file[i] != '\0'; i++)
-   {
-      cout << file[i];
-      if (filledSpace[i] != '\0')
-      {
-         cout << filledSpace[i];
-      }
+         file[i - rNOffset] = file[i];//everything else                    
    }
    return;
 }
 
 /*************************************************************************
- *                                                                         
- *                                                                         
+ * askQuestion will ask a question found by interpret.                     
  ************************************************************************/
-int main()
+void askQuestion(char tempSpace[], char space[])
 {
-   char fileName[256];
-   char space[24][256];
-   char filledSpace[][256]
-   char file[24][256];
-
-   getFileName(fileName);
-   readFile(fileName, space, file);
-   getAnswers(space, filledSpace);
-   display(file, filledSpace);
-   return 0;
+   char first = toupper(tempSpace[0]); //capitalize first letter into char
+   cout << "\t" << first;             //tab before question + first letter
+   for (int i = 1; tempSpace[i] != '\0'; i++)
+   {
+      if (tempSpace[i] == '_')         //turn _ into a space               
+      {
+         cout << " ";
+      }
+      else if (tempSpace[i] == toupper(tempSpace[i]))
+      {
+         char temp = tolower(tempSpace[i]);//everything else lower         
+         cout << temp;
+      }
+      else                             //everything else   
+  {
+               cout << tempSpace[i];
+      }
+   }
+   cout << ": ";                       //: and a space                     
+   cin.get(space, 32);                 //get space                         
+   cin.ignore(256, '\n');              //clear                             
+   return;
 }
+
+/*************************************************************************
+ * interpret will interpret any colons found in the file.                  
+ ************************************************************************/
+void interpret(char tempFile[], char file[], int &i, int &offset)
+{
+   switch (tempFile[i + 1])
+   {
+      case '\0': //Catch if after : is null                                
+         cout << "invalid: " << tempFile[i + 1] << endl;
+         break;
+      case '!'://new line                                                  
+         file[i - ++offset] = '\n';
+         i += 2;
+         offset += 2;
+         if (tempFile[i + 2] == '!')
+         {
+            i++;
+            file[i - offset] = '\n';
+            i += 2;
+            offset += 2;
+         }
+         break;
+      case '<'://open quote                                    
